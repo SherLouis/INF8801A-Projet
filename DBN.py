@@ -7,8 +7,6 @@ import torch.nn.functional as F
 from RBM import RBM
 
 
-
-
 class DBN(nn.Module):
     def __init__(self,
                 visible_units = 256,
