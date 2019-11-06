@@ -4,39 +4,51 @@ import sklearn as skl
 from sklearn.model_selection import train_test_split
 import librosa
 import os
+import pickle
 
 # Lecture des données
-path = (os.path.dirname(os.path.realpath(__file__))) #Changer le path pour lire les fichiers audio
-os.chdir(path)
-dir_path = os.path.dirname(os.getcwd())
-print("Current directory is : " + dir_path)
+if(os.path.exists("..\\DATA.data")):
+	filehandler = open("..\\DATA.data", 'rb')
+	labels = pickle.load(filehandler)
+	data = pickle.load(filehandler)
+	filehandler.close()
 
-data = np.zeros((10*100*645, 513))
-labels = np.zeros((10*100*645,1))
-genres = 'blues classical country disco hiphop jazz metal pop reggae rock'.split()
-hop_length = 1024
-i = 0
-for g in genres:
-	# song_number = 0
-	for filename in os.listdir(dir_path + "\genres\\" + g):
-		songname = dir_path + "\genres\\" + g + "\\" + filename
-		y, sr = librosa.load(songname, mono=True, duration=30)
-		splited = [y[i:i + 1024] for i in range(0, len(y), 1024)]
-		splited = splited[0:len(splited) - 1]
-		for sub_song in range(0, len(splited)):
-			dft = abs(np.fft.fft(splited[sub_song]))
-			subset = dft[0:513]
-			data[i, :] = subset
-			labels[i,:] = genres.index(g)
-			i = i+1
-		# song_number += 1
+else:
+	dir_path = os.path.dirname(os.getcwd())
+	print("Current directory is : " + dir_path)
 
+	data = np.zeros((10,100,645,513), dtype=np.uint8) # 10 genres, 100 chansons par genre, 645 bouts par chanson, 513 valeurs par bout
+	labels = np.zeros((10*100*645,1), dtype=np.float32)
+	genres = 'blues classical country disco hiphop jazz metal pop reggae rock'.split()
+	hop_length = 1024
+	i = 0;
+	for g in genres:
+	    song_number = 0
+	    for filename in os.listdir(dir_path + "\genres\\" + g):
+	        songname = dir_path + "\genres\\" + g + "\\" + filename
+	        y, sr = librosa.load(songname, mono=True, duration=30)
+	        splited = [y[i:i + 1024] for i in range(0, len(y), 1024)]
+	        splited = splited[0:len(splited) - 1]
+	        for sub_song in range(0, len(splited)):
+	            dft = abs(np.fft.fft(splited[sub_song]))
+	            subset = dft[0:513]
+	            data[genres.index(g), song_number, sub_song, :] = subset
+	            labels[i,:] = genres.index(g)
+	            i += 1
+	        song_number += 1
+
+	# Enregistrer ces données pour ne pas être obligé à tout recalculer lorsqu'on fait des tests
+	filehandler = open("..\\DATA.data", 'wb')
+	pickle.dump(labels, filehandler)
+	pickle.dump(data, filehandler)
+	filehandler.close()
+
+data_DBN = data.reshape((-1,513))
 # Division en ensembles de données et création des tenseurs
 # Division pour avoir autant de données de chaque style
-X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size = 0.5, random_state = 0, shuffle = True)
+X_train, X_test, y_train, y_test = train_test_split(data_DBN, labels, test_size = 0.5, random_state = 0, shuffle = True)
 X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size = 0.4, random_state = 0, shuffle = True)
 
-# TODO : Enregistrer ces données pour ne pas être obligé à tout recalculer lorsqu'on fait des tests
 
 
 # Création du DBN
