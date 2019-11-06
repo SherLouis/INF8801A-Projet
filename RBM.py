@@ -19,8 +19,8 @@ class RBM(nn.Module):
     '''
 
     def __init__(self,
-                visible_units=256,
-                hidden_units = 64,
+                visible_units=50,
+                hidden_units = 50,
                 k=2,
                 learning_rate=1e-5,
                 learning_rate_decay = False,

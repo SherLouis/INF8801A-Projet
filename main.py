@@ -1,5 +1,6 @@
 import DBN
 import numpy as np
+import torch
 import sklearn as skl
 from sklearn.model_selection import train_test_split
 import librosa
@@ -49,13 +50,20 @@ data_DBN = data.reshape((-1,513))
 X_train, X_test, y_train, y_test = train_test_split(data_DBN, labels, test_size = 0.5, random_state = 0, shuffle = True)
 X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size = 0.4, random_state = 0, shuffle = True)
 
+X_train = torch.from_numpy(X_train)
+X_test = torch.from_numpy(X_test)
+y_train = torch.from_numpy(y_train)
+y_test = torch.from_numpy(y_test)
+X_val = torch.from_numpy(X_val)
+y_val = torch.from_numpy(y_val)
 
 
 # Création du DBN
-
+dbn_net = DBN.DBN(visible_units=513, hidden_units=[50,50,50],learning_rate=0.001)
 
 # Entrainement du DBN
-
+# Entrainement non-supervisé
+dbn_net.train_static(X_train, y_train, num_epochs=5, batch_size=10)
 
 # Extraction des caractéristiques
 # TODO : Échantillonage du training set pour obtenir 10 000
@@ -87,7 +95,6 @@ def run_and_extract_DBN(DBN, input, layers2extract=[3]):
 # 5s = environ 108 morceaux. Overlap de 2.5s -> par bons de 54 morceaux
 labels = np.array([])
 data = np.array([])
-dbn = DBN()
 
 nb_units_layer = 50
 fc = 22050 # Fréquence d'échantillonage
